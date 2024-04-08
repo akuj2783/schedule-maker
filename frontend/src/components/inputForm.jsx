@@ -70,9 +70,11 @@ const InputForm = ({ onScheduleGenerate, setMaterialAName, setMaterialBName }) =
       // Calculate the date for the current day of the schedule
       const scheduleDate = new Date(currentDate);
       scheduleDate.setDate(scheduleDate.getDate() + newPlanDay);
+
+      const formattedDate = `${scheduleDate.getDate()}-${scheduleDate.getMonth() + 1}-${scheduleDate.getFullYear()}`;
   
       schedule.push({
-        date: scheduleDate.toLocaleDateString(), // Convert currentDate to a string representation of the date
+        date: formattedDate, // Convert currentDate to a string representation of the date
         materialA: matAplannedStock,
         materialB: matBplannedStock
       });
@@ -100,13 +102,28 @@ const InputForm = ({ onScheduleGenerate, setMaterialAName, setMaterialBName }) =
     const matBStockDaysNeeded = stockToBeMaintained - materialB_DOI + deliveryDay;
     matBToBeDelivered = matBStockDaysNeeded * materialB_PDC;
 
-    if (matAToBeDelivered + matBToBeDelivered < minTruckLoad) {
-      const truckLoadBalance = minTruckLoad - (matAToBeDelivered + matBToBeDelivered);
-      if (materialA_DOI <= materialB_DOI) {
-        matAToBeDelivered += truckLoadBalance;
-      } else {
-        matBToBeDelivered += truckLoadBalance;
-      }
+    // if (matAToBeDelivered + matBToBeDelivered < minTruckLoad) {
+    //   const truckLoadBalance = minTruckLoad - (matAToBeDelivered + matBToBeDelivered);
+    //   if (materialA_DOI <= materialB_DOI) {
+    //     matAToBeDelivered += truckLoadBalance;
+    //   } else {
+    //     matBToBeDelivered += truckLoadBalance;
+    //   }
+    // }
+    const truckLoadBalance = minTruckLoad - (matAToBeDelivered + matBToBeDelivered);
+        
+    if(truckLoadBalance > 0){
+    const halfTruckBalance=truckLoadBalance/2;
+    matAToBeDelivered+=halfTruckBalance;
+    matBToBeDelivered+=halfTruckBalance;
+    }
+    
+    if(matAToBeDelivered<0)
+    {
+      matAToBeDelivered=0;
+    }else if(matBToBeDelivered<0)
+    {
+      matBToBeDelivered=0;
     }
 
     demandPlan.push([deliveryDay, [matAToBeDelivered, matBToBeDelivered]]);
@@ -122,18 +139,8 @@ const InputForm = ({ onScheduleGenerate, setMaterialAName, setMaterialBName }) =
         </label>
         <br />
         <label>
-          Name of Material B:
-          <input type="text" name="materialBName" value={formData.materialBName} onChange={handleChange} />
-        </label>
-        <br />
-        <label>
           Per Day Consumption for {formData.materialAName || 'Material A'}:
           <input type="number" name="materialA_PDC" value={formData.materialA_PDC} onChange={handleChange} />
-        </label>
-        <br />
-        <label>
-          Per Day Consumption for {formData.materialBName || 'Material B'}:
-          <input type="number" name="materialB_PDC" value={formData.materialB_PDC} onChange={handleChange} />
         </label>
         <br />
         <label>
@@ -142,12 +149,22 @@ const InputForm = ({ onScheduleGenerate, setMaterialAName, setMaterialBName }) =
         </label>
         <br />
         <label>
+          Name of Material B:
+          <input type="text" name="materialBName" value={formData.materialBName} onChange={handleChange} />
+        </label>
+        <br />
+        <label>
+          Per Day Consumption for {formData.materialBName || 'Material B'}:
+          <input type="number" name="materialB_PDC" value={formData.materialB_PDC} onChange={handleChange} />
+        </label>
+        <br />
+        <label>
           Current Days of Inventory for {formData.materialBName || 'Material B'}:
           <input type="number" name="materialB_DOI" value={formData.materialB_DOI} onChange={handleChange} />
         </label>
         <br />
         <label>
-          Safety Stock for Material:
+          Safety Stock for Material(in days):
           <input type="number" name="safetyStock" value={formData.safetyStock} onChange={handleChange} />
         </label>
         <br />
@@ -157,7 +174,7 @@ const InputForm = ({ onScheduleGenerate, setMaterialAName, setMaterialBName }) =
         </label>
         <br />
         <label>
-          Stock to be Maintained:
+          Stock to be Maintained(in days):
           <input type="number" name="stockToBeMaintained" value={formData.stockToBeMaintained} onChange={handleChange} />
         </label>
         <br />
